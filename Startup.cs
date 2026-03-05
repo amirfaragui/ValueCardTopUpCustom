@@ -1,6 +1,6 @@
-using ValueCards.Models;
-using ValueCards.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
@@ -15,9 +15,10 @@ using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Text;
+using ValueCards.Hubs;
+using ValueCards.Models;
+using ValueCards.Services;
 using ValueCards.Services.Identity;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
 
 namespace ValueCards
 {
@@ -109,7 +110,7 @@ namespace ValueCards
 
       services.AddHealthChecks();
 
-      //services.AddSignalR();
+      services.AddSignalR();
 
       services.AddKendo();
 
@@ -136,7 +137,8 @@ namespace ValueCards
         app.UseHsts();
       }
 
-      //app.UseHttpsRedirection();
+      
+       //app.UseHttpsRedirection();
       app.UseStaticFiles();
 
       app.UseRouting();
@@ -147,8 +149,9 @@ namespace ValueCards
 
       app.UseEndpoints(endpoints =>
       {
-        //endpoints.MapControllers();
-        endpoints.MapControllerRoute(
+      // endpoints.MapControllers();
+       endpoints.MapHub<ProgressHub>("/progressHub");
+       endpoints.MapControllerRoute(
                   name: "default",
                   pattern: "{controller=consumers}/{action=Index}/{id?}");
         endpoints.MapRazorPages();

@@ -1,20 +1,25 @@
-﻿
-@(Html.Kendo().Grid<ValueCards.Models.ValueCardModel>()
+﻿@(Html.Kendo().ProgressBar()
+      .Name("processProgress")
+      .Type(ProgressBarType.Percent)
+      .HtmlAttributes(new { style = "width: 100%; display: none; margin-bottom: 10px;" })
+)
+@(
+Html.Kendo().Grid<ValueCards.Models.ValueCardModel>()
       .Name("grid")
       .Columns(columns =>
       {
-        columns.Bound(model => model.EPAN).Width(100);
-        columns.Bound(model => model.Device).Width(80);
-        columns.Bound(model => model.Company).Width(120);
-        columns.Bound(model => model.Participant).Width(120);
+          columns.Bound(model => model.EPAN).Width(100);
+          columns.Bound(model => model.Device).Width(80);
+          columns.Bound(model => model.Company).Width(120);
+          columns.Bound(model => model.Participant).Width(120);
           columns.Bound(model => model.Amount).Width(100);
-        //columns.Bound(model => model.Amount).Width(100).Format("{0:C}");
-        //columns.Bound(model => model.ValidUntil).Width(150);
+          //columns.Bound(model => model.Amount).Width(100).Format("{0:C}");
+          //columns.Bound(model => model.ValidUntil).Width(150);
 
-      //  columns.Command(command =>
-      //  {
-        //  command.Custom("Topup").Text("Topup").Click("onTopUp");
-        //}).Width(200);
+          //  columns.Command(command =>
+          //  {
+          //  command.Custom("Topup").Text("Topup").Click("onTopUp");
+          //}).Width(200);
 
       })
  .ToolBar(t =>
@@ -25,7 +30,9 @@
         .IconClass("k-icon k-i-excel")
         .HtmlAttributes(new { id = "btnUpload", onclick = "openFileDialog(event)" });
 
-    
+    t.Custom()
+    .Text("Process Value Card Update")
+    .HtmlAttributes(new { IDataKey = "btnSave", onclick = "processUpdates(event)" });
     t.Search();
 })
   .Pageable(p =>
@@ -53,22 +60,42 @@
 )
 <input type="file" id="excelUpload" style="display: none;" accept=".xlsx, .xls, .csv" onchange="onFileSelected(this)" />
 
+
 @section Scripts{ 
-  <script type="text/javascript">
-      function onTopUp(e) {
+ <script type="text/javascript">
+       const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/progressHub")
+            .withAutomaticReconnect() // Helps if connection drops
+            .build();
+
+        connection.on("ReceiveProgress", function (percent) {
+            console.log("Progress received: " + percent + "%"); // Debugging
+            var pb = $("#processProgress").data("kendoProgressBar");
+            if (pb) {
+                pb.value(percent);
+            }
+        });
+
+        connection.start()
+            .then(function () { console.log("SignalR Connected!"); })
+            .catch(function (err) { return console.error(err.toString()); });
+     
+
+
+    function onTopUp(e) {
       e.preventDefault();
 
       var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
       var url = '@Url.Action("topup", "consumers")/' + dataItem.Id;
       newTab = window.open(url, '_blank');
     }
-     function openFileDialog(e) {
+    function openFileDialog(e) {
             e.preventDefault();
             $("#excelUpload").click();
         }
 
              function onFileSelected(input) {
-            if (input.files && input.files[0]) {
+                if (input.files && input.files[0]) {
                 var formData = new FormData();
                 formData.append("file", input.files[0]);
 
@@ -82,15 +109,8 @@
                         if (result.success) {
                             var grid = $("#grid").data("kendoGrid");
 
-                            // Option A: Replace all current data with the CSV data
+                           // Replace all current data with the CSV data
                             grid.dataSource.data(result.data);
-
-                            // Option B: If you want to APPEND to existing data:
-                            /*
-                            result.data.forEach(function(item) {
-                                grid.dataSource.add(item);
-                            });
-                            */
 
                             alert("Imported " + result.data.length + " records.");
                         } else {
@@ -105,7 +125,30 @@
             }
         }
 
+        // process the list
+        function processUpdates(e) {
 
+            e.preventDefault();
+            var pb = $("#processProgress").data("kendoProgressBar");
+            if(pb) {
+              pb.value(0); // Reset to 0
+             // $("#processProgress").hide();
+            }
+            kendo.ui.progress($("#grid"), true);  
+
+            $.post('@Url.Action("ProcessUploadedData", "consumers")', function(res) {
+               
+            if (res.success) {
+                   var grid = $("#grid").data("kendoGrid");
+                   grid.dataSource.data([]);
+                   kendo.ui.progress($("#grid"), false);
+                   alert(res.message);
+            } else {
+                alert("Error: " + res.message);
+                 kendo.ui.progress($("#grid"), false);
+            };
+            });
+        }
 
   </script>
 }
