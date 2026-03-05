@@ -17,7 +17,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyProductAttribute("Guest Reservation")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("2.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.0.0+2f3c22a7974bbbef5a946619ef7a17375c8b8b9c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.0.0+9f14589624e88592f266622a31101cec6e5300eb")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ValueCards.Views")]
 [assembly: System.Reflection.AssemblyVersionAttribute("2.0.0.0")]
 

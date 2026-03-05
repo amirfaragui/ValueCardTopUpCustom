@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using CsvHelper.Configuration.Attributes;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -108,6 +109,21 @@ namespace ValueCards.Models
     [Editable(false)] 
     public decimal? Balance { get; set; }
   }
+
+public class ValueCardModel
+    {
+        [Name ("* EPAN") ]
+        public string EPAN { get; set; }
+        [Name("* Device")]
+        public string Device { get; set; }
+        [Name("Amount")]
+        public string Amount { get; set; }
+        [Name("* Company")]
+        public string Company { get; set; }
+        [Name("* Participant")]
+        public string Participant { get; set; }
+       
+    }
 
   class ConsumerList
   {

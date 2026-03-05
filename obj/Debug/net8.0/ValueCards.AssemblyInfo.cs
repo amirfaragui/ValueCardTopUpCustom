@@ -11,7 +11,7 @@
 using System;
 using System.Reflection;
 
-[assembly: Microsoft.AspNetCore.Identity.UI.UIFrameworkAttribute("Bootstrap4")]
+[assembly: Microsoft.AspNetCore.Identity.UI.UIFrameworkAttribute("Bootstrap5")]
 [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("aspnet-GuestReservation-D1934578-F093-478C-8505-6FE5BF3451A1")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("Scheidt & Bachmann")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]

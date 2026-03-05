@@ -1,0 +1,35 @@
+﻿@{
+    Layout = null; // Must be null because it loads inside the Kendo Window
+}
+
+<div style="padding:20px;">
+
+    @(Html.Kendo().Upload()
+        .Name("files") // Must match controller parameter
+        .Async(a => a
+        .Save("UploadExcel", "Consumers") // Controller action
+        .AutoUpload(true)
+        )
+        .Multiple(false) // Only one file at a time
+        .Validation(v => v
+        .AllowedExtensions(new[] { ".xls", ".xlsx" }) // Only Excel
+        )
+        .HtmlAttributes(new { style = "width:100%;" }) // Full width drop area
+        .Events(e => e.Success("onUploadSuccess")) // Call JS when done
+        )
+
+</div>
+
+<script>
+    // Called after successful upload
+    function onUploadSuccess(e) {
+        if (e.response && e.response.success) {
+
+            // Close the Kendo Window
+            $("#excelUploadWindow").data("kendoWindow").close();
+
+            // Refresh your grid
+            $("#grid").data("kendoGrid").dataSource.read();
+        }
+    }
+</script>

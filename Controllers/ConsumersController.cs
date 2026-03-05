@@ -1,9 +1,14 @@
-﻿using Kendo.Mvc.UI;
+﻿using CsvHelper;
+using Kendo.Mvc.UI;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Formats.Asn1;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ValueCards.Models;
@@ -35,7 +40,30 @@ namespace ValueCards.Controllers
       return Json(_consumerService.Read(request));
     }
 
-    public IActionResult Topup(string id, [FromServices] IConsumerRepository repository)
+
+        [HttpPost]
+        public IActionResult UploadExcel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return Json(new { success = false, message = "No file selected." });
+
+            try
+            {
+                using (var reader = new StreamReader(file.OpenReadStream()))
+                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    // Maps CSV headers to Value card model properties automatically
+                    var records = csv.GetRecords<ValueCardModel>().Where(c=> c.Company.Contains("70 -")).ToList();
+
+                    return Json(new { success = true, data = records });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Error: " + ex.Message });
+            }
+        }
+        public IActionResult Topup(string id, [FromServices] IConsumerRepository repository)
     {
       if (id == null)
         throw new ArgumentNullException(nameof(id));
