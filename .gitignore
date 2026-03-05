@@ -4,3 +4,16 @@
 
 /.vs/ValueCards
 /bin
+/obj/Debug/netcoreapp3.1/ValueCards.csproj.FileListAbsolute.txt
+/obj/Debug/netcoreapp3.1/ValueCards.genruntimeconfig.cache
+/obj/Debug/netcoreapp3.1/ValueCards.dll
+/obj/Debug/netcoreapp3.1/ValueCards.Views.dll
+/obj/Debug/netcoreapp3.1/apphost.exe
+/obj/Debug/netcoreapp3.1/ValueCards.AssemblyInfoInputs.cache
+/obj/Debug/netcoreapp3.1/ValueCards.Views.pdb
+/obj/Debug/netcoreapp3.1/ValueCards.pdb
+/obj/Debug/netcoreapp3.1/ValueCards.sourcelink.json
+/obj/Debug/netcoreapp3.1/ValueCards.RazorTargetAssemblyInfo.cache
+/obj/Debug/net8.0/ref/ValueCards.dll
+/obj/Debug/net8.0/refint/ValueCards.dll
+/obj/project.assets.json
