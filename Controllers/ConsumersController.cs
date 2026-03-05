@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Asn1.X509;
 using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
@@ -87,18 +88,48 @@ namespace ValueCards.Controllers
       {
          return Json(new { success = false, message = "Session expired. Please upload again." });
       }
-     
-      // Iterate and call API
-     foreach (var record in records)
+        var failedTransactions = new List<ValueCardModel>();
+
+       // Iterate and call API
+       foreach (var record in records)
       {
-          
-          await Task.Delay(10);
-       }
+           ConsumerTopupModel topupModel = new ConsumerTopupModel();
+           
+
+           topupModel.Id = "70," + record.Participant.Substring(0, record.Participant.IndexOf("-"));
+           var amount = record.Amount.Replace("$", "");
+           topupModel.Amount = -Math.Abs(Decimal.Parse(amount));
+           
+          try
+          {
+            Transaction result = await _consumerService.PostPaymentAsync(topupModel);
+            if (result != null && !String.IsNullOrEmpty(result.Id))
+            {
+
+            }
+          }
+          catch(Exception e)
+          {
+             failedTransactions.Add(new ValueCardModel
+             {
+              Participant = record.Participant,
+              Amount =record.Amount,
+              
+             });
+          }
+      }
 
       // Clean up cache after processing
       _cache.Remove(VALUE_CARD_LIST);
+      if (failedTransactions.Any())
+      {
+        var fileName = $"FailedTransactions_{DateTime.Now:yyyyMMddHHmmss}.csv";
+        var path = Path.Combine("C:/", fileName);
 
-       return Json(new { success = true, message = $"Successfully processed {records.Count} records." });
+          CsvCreator.WriteFailedTransactions(path, failedTransactions);
+        }
+
+      return Json(new { success = true, message = $"Successfully processed {records.Count} records." });
   }
 
 
