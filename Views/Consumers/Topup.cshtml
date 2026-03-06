@@ -2,20 +2,26 @@
 
 <div id="messages" class="k-content"></div>
 
-@(Html.Kendo().Form<ValueCards.Models.ConsumerTopupModel>()
+@(
+Html.Kendo().Form<ValueCards.Models.ConsumerTopupModel>()
   .Name("form")
   .HtmlAttributes(new { method = "POST", style = "width: 500px;"})
   .Orientation("horizontal")
   .Items(items =>
   {
-    items.AddGroup()
+      items.AddGroup()
       .Label("Topup Value Card")
       .Items(i =>
       {
-        i.Add().Field(f => f.Amount);
-        i.Add().Field(f => f.Id).Label(" ").EditorTemplate("<input name='Id' type='hidden' />");
+          i.Add().Field(f => f.Amount)
+         .Editor(editor => editor.NumericTextBox()
+         .Format("n2")   // 2 decimal places
+         .Min(-10000)    // allow negative numbers, adjust as needed
+         .Step(1)        // increment/decrement step
+                    );
+          i.Add().Field(f => f.Id);//.Label(" ").EditorTemplate("<input name='Id' type='hidden' />");
       });
-    items.AddGroup()
+   /* items.AddGroup()
       .Label("Customer")
       .Items(i =>
       {
@@ -24,7 +30,7 @@
         i.Add().Field(f => f.Surname).EditorTemplate("<input name='Surname' class='k-textbox' disabled />"); ;
         i.Add().Field(f => f.ValidUntil).EditorTemplate("<input name='ValidUntil' class='k-textbox' disabled />");
         i.Add().Field(f => f.Balance).EditorTemplate("<input name='Balance' class='k-textbox' disabled />"); ;
-      });
+      });*/
 
   })
   .Events(events => events.Submit("onSubmit"))

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -27,7 +28,8 @@ namespace ValueCards
       var logConfiguration = new LoggerConfiguration().ReadFrom.Configuration(configuration);
       logConfiguration.WriteTo.File(logFileTemplate, outputTemplate: outputTemplate, rollingInterval: RollingInterval.Day);
       Log.Logger = logConfiguration.CreateLogger();
-
+      var directoryPath = @"C:/ValueCardReports";
+      if (!Directory.Exists(directoryPath)) Directory.CreateDirectory(directoryPath);
       try
       {
         Log.Information("Starting web host");

@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Security;
 using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
@@ -89,6 +90,7 @@ namespace ValueCards.Controllers
          return Json(new { success = false, message = "Session expired. Please upload again." });
       }
         var failedTransactions = new List<ValueCardModel>();
+        var successfulTransactions = new List<ValueCardModel>();
 
        // Iterate and call API
        foreach (var record in records)
@@ -97,46 +99,117 @@ namespace ValueCards.Controllers
            
 
            topupModel.Id = "70," + record.Participant.Substring(0, record.Participant.IndexOf("-"));
-           var amount = record.Amount.Replace("$", "");
-           topupModel.Amount = -Math.Abs(Decimal.Parse(amount));
+           var amount = Decimal.Parse(record.Amount.Replace("$", ""));
+           if (amount == 0)
+           {
+               //calcuate charge manually  
+               TimeSpan duration = record.TariffEndTime - record.TariffStartTime;
+               if ((int)duration.TotalMinutes > 20)
+                   amount = (decimal)CalculateRate(record);
+
+           }
+           // add the amount back to the record for saving
+           record.Amount = "$" + amount.ToString();
+           topupModel.Amount = -Math.Abs(amount);
            
           try
           {
             Transaction result = await _consumerService.PostPaymentAsync(topupModel);
             if (result != null && !String.IsNullOrEmpty(result.Id))
             {
-
+                  successfulTransactions.Add(record);
             }
           }
           catch(Exception e)
           {
-             failedTransactions.Add(new ValueCardModel
-             {
-              Participant = record.Participant,
-              Amount =record.Amount,
-              
-             });
+            _logger.LogError($"Error calling API: {e}");
+             failedTransactions.Add(record);
           }
       }
 
-      // Clean up cache after processing
-      _cache.Remove(VALUE_CARD_LIST);
-      if (failedTransactions.Any())
-      {
+        // Clean up cache after processing
+         _cache.Remove(VALUE_CARD_LIST);
+         //save failed transactions
+       var directoryPath = @"C:/ValueCardReports";
+       if (failedTransactions.Any())
+       {
         var fileName = $"FailedTransactions_{DateTime.Now:yyyyMMddHHmmss}.csv";
-        var path = Path.Combine("C:/", fileName);
+        var path = Path.Combine(directoryPath, fileName);
 
-          CsvCreator.WriteFailedTransactions(path, failedTransactions);
+          CsvCreator.WriteTransactions(path, failedTransactions);
         }
-
-      return Json(new { success = true, message = $"Successfully processed {records.Count} records." });
+      //save successful transactions
+      if (successfulTransactions.Any())
+     {
+        var fileName = $"SuccessfulTransactions_{DateTime.Now:yyyyMMddHHmmss}.csv";
+        var path = Path.Combine(directoryPath, fileName);
+        CsvCreator.WriteTransactions(path, successfulTransactions);
+      }
+       return Json(new { success = true, message = $"Processed {records.Count} records. [{successfulTransactions.Count}] successful transactions , [{failedTransactions.Count}] Failed Transactions" });
   }
 
 
+  private double CalculateRate(ValueCardModel record)
+  {
+   double dayHours = 0;
+   double nightHours = 0;
+   double weekendHours = 0;
+
+   TimeSpan dayStart = new TimeSpan(8, 30, 0);  // 08:30
+   TimeSpan dayEnd = new TimeSpan(18, 0, 0);    // 18:00
+
+   DateTime current = record.TariffStartTime;
+
+   while (current < record.TariffEndTime)
+   {
+    DateTime next = current.AddMinutes(30);
+    if (next > record.TariffEndTime)
+     next = record.TariffEndTime;
+
+    double hours = (next - current).TotalHours;
+
+    if (current.DayOfWeek == DayOfWeek.Saturday || current.DayOfWeek == DayOfWeek.Sunday)
+    {
+     weekendHours += hours;
+    }
+    else
+    {
+     TimeSpan time = current.TimeOfDay;
+
+     if (time >= dayStart && time < dayEnd)
+      dayHours += hours;
+     else
+      nightHours += hours;
+    }
+
+    current = next;
+   }
+
+   // Weekday charges
+   double weekdayHours = dayHours + nightHours;
+   double weekdayCharge = weekdayHours * 5;
+
+   // Cap weekday charge to $16 per 24 hours
+   if (weekdayHours >= 24)
+    weekdayCharge = 16;
+   else
+    weekdayCharge = Math.Min(weekdayCharge, 16);
+
+   // Weekend charges: $5/hour capped at $9 per 24h
+   double weekendCharge = weekendHours * 5;
+   if (weekendHours >= 24)
+    weekendCharge = 9;
+   else
+    weekendCharge = Math.Min(weekendCharge, 9);
+
+   return weekdayCharge + weekendCharge;
+
+   
+  }
 
   public IActionResult Topup(string id, [FromServices] IConsumerRepository repository)
       {
-      if (id == null)
+     /* if (id == null)
         throw new ArgumentNullException(nameof(id));
 
       var parts = id.Split(',');
@@ -157,9 +230,9 @@ namespace ValueCards.Controllers
         .FirstOrDefault();
 
       if (item == null)
-        return NotFound();
+        return NotFound();*/
 
-      return View(item);
+      return View();
     }
 
     [HttpPost]
@@ -188,7 +261,7 @@ namespace ValueCards.Controllers
       catch (Exception ex)
       {
         _logger.LogError(ex.ToString());
-        throw;
+         return new ObjectResult(new { message = ex.Message }) { StatusCode = 500 };
       }
     }
   }

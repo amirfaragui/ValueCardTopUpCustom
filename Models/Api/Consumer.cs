@@ -122,8 +122,13 @@ public class ValueCardModel
         public string Company { get; set; }
         [Name("* Participant")]
         public string Participant { get; set; }
-       
-    }
+        [Name("Tariff Start Time")]
+        public DateTime TariffStartTime { get; set; }
+        [Name("Tariff End Time")]
+        public DateTime TariffEndTime { get; set; }
+
+
+ }
 
   class ConsumerList
   {
@@ -152,7 +157,7 @@ public class ValueCardModel
   public class ConsumerTopupModel : ConsumerModel
   {
     [Required]
-    [Range(0.01, 1000)]
+    [Range(-1000, 1000)]
     public decimal Amount { get; set; }
 
     public ConsumerTopupModel()

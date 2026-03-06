@@ -13,6 +13,9 @@ Html.Kendo().Grid<ValueCards.Models.ValueCardModel>()
           columns.Bound(model => model.Company).Width(120);
           columns.Bound(model => model.Participant).Width(120);
           columns.Bound(model => model.Amount).Width(100);
+          columns.Bound(model => model.TariffStartTime).Width(100);
+          columns.Bound(model => model.TariffEndTime).Width(100);
+           
           //columns.Bound(model => model.Amount).Width(100).Format("{0:C}");
           //columns.Bound(model => model.ValidUntil).Width(150);
 
@@ -27,18 +30,25 @@ Html.Kendo().Grid<ValueCards.Models.ValueCardModel>()
     // Add the Custom Upload Button
     t.Custom()
         .Text("Upload Excel")
-        .IconClass("k-icon k-i-excel")
+        .IconClass("k-i-upload")
         .HtmlAttributes(new { id = "btnUpload", onclick = "openFileDialog(event)" });
 
     t.Custom()
     .Text("Process Value Card Update")
+    .IconClass("k-i-check")
     .HtmlAttributes(new { IDataKey = "btnSave", onclick = "processUpdates(event)" });
-    t.Search();
+
+    t.Custom()
+    .Text("Manual Topup-Down")
+    .IconClass("k-i-edit")
+    .HtmlAttributes(new { IDataKey = "btnTop", onclick = "onTopUp(event)" });
+
+  //  t.Search();
 })
   .Pageable(p =>
   {
     p.Refresh(true);
-    p.PageSizes(new int[] { 50, 100, 200 });
+    p.PageSizes(new int[] { 500, 1000 });
   })
   .Scrollable(scrollable => scrollable.Enabled(true).Height("calc(100vh - 230px)").Virtual(true))
   .Selectable(selectable => selectable.Mode(GridSelectionMode.Single))
@@ -150,5 +160,13 @@ Html.Kendo().Grid<ValueCards.Models.ValueCardModel>()
             });
         }
 
+
+            function onTopUp(e) {
+          e.preventDefault();
+
+       //   var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+          var url = '@Url.Action("topup", "consumers")'///' + dataItem.Id;
+          newTab = window.open(url, '_blank');
+        }
   </script>
 }
